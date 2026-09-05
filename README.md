@@ -19,7 +19,7 @@ Both scripts use MATLAB optimization tooling around `lsqnonlin`, contour plots, 
 
 ## Requirements
 
-The source was written for MATLAB with Optimization Toolbox support. A local MATLAB or Octave runtime was not available during validation, so validation is static only.
+The source was written for MATLAB with Optimization Toolbox support. A purpose-built GNU Octave 11.1.0 environment with `optim` 1.6.3 parsed both submitted files, and an external compatibility harness using the submitted range and azimuth formulas recovered the expected point `(9500, 500)` with negligible residuals. Exact MATLAB `optimoptions`, callback, plotting, and entrypoint behavior was not reproduced.
 
 ## Validate
 
@@ -29,4 +29,4 @@ Run:
 make check
 ```
 
-The check confirms the expected MATLAB files, important solver markers, and basic privacy hygiene.
+The check confirms the expected MATLAB files, important solver markers, and basic privacy hygiene. The recorded container validation separately covers formula-level execution.
