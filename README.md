@@ -1,6 +1,6 @@
 # Localization and Navigation: Trilateration and Azimuth
 
-My CS BSc localization/navigation homework project.
+My CS BSc localization and navigation homework project.
 
 ## Project Summary
 
