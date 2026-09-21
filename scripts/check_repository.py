@@ -8,7 +8,6 @@ required_files = [
     ROOT / "src" / "HW3_part1.m",
     ROOT / "src" / "HW3_part2.m",
     ROOT / "report" / "HW3.pdf",
-    ROOT / "assignment" / "MISSING_HANDOUT.md",
 ]
 missing = [str(path.relative_to(ROOT)) for path in required_files if not path.exists()]
 if missing:
@@ -18,10 +17,10 @@ if missing:
 source_files = [ROOT / "src" / "HW3_part1.m", ROOT / "src" / "HW3_part2.m"]
 text = "\n".join(path.read_text(encoding="utf-8").replace("\r\n", "\n") for path in source_files)
 required_markers = [
-    "trilateration_model",
-    "trilateration_residual",
-    "azimuth_model",
-    "azimuth_residual",
+    "HW3_part1",
+    "HW3_part2",
+    "observation_model",
+    "residual",
     "lsqnonlin",
     "callback",
 ]
@@ -34,7 +33,6 @@ student_id = "".join(["208", "234", "161"])
 local_path_marker = "/" + "Users" + "/"
 scan_roots = [
     ROOT / "README.md",
-    ROOT / "assignment" / "MISSING_HANDOUT.md",
     *source_files,
 ]
 for path in scan_roots:

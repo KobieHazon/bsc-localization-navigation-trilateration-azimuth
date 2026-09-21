@@ -1,67 +1,51 @@
-function HW3()
-  controls = transpose([10000 10000; -10000 -10000; 10000 -10000; -10000 10000]);
-  target = azimuth_model(controls, transpose([9500 500]));
-  x = -20000:100:20000;
-  y = -20000:100:20000;
-  phi_grid = zeros(401, 401);
-  for i = 1:401
-    for j = 1:401
-      phi_grid(i, j) = norm(azimuth_residual(controls, target , transpose([x(i) y(j)])))^2;
+function [estimate, resNorm] = HW3_part2(show_plot)
+  % Estimate the target from four range/azimuth observations.
+  if nargin < 1
+    show_plot = true;
+  end
+  controls = [10000 10000; -10000 -10000; 10000 -10000; -10000 10000].';
+  target_location = [9500; 500];
+  observations = observation_model(controls, target_location);
+  residual = @(location) observation_model(controls, location) - observations;
+  if show_plot
+    coordinates = -20000:100:20000;
+    objective = zeros(length(coordinates));
+    for row = 1:length(coordinates)
+      for column = 1:length(coordinates)
+        objective(row, column) = norm(residual([coordinates(column); coordinates(row)]))^2;
+      end
     end
+    figure;
+    contour(coordinates, coordinates, objective, 25);
+    daspect([1 1 1]);
+    hold on;
+    plot(controls(1,:), controls(2,:), 'ro');
+    plot(target_location(1), target_location(2), 'rx');
   end
-  
-  figure
-  contour(x, y, phi_grid, 25);
-  daspect([1 1 1]);
-  hold on;
-  plot(controls(1, : ), controls(2, :), 'ro ');
-  plot(target(1, :), target(2, :), 'rx ');
-  hold off;
-  options = optimoptions('lsqnonlin', 'SpecifyObjectiveGradient', false, 'Algorithm', 'levenberg-marquardt', 'OutputFcn', @callback);
-  [x, resNorm, residual, exitflag, output] = lsqnonlin(@(ell) azimuth_residual(controls, target, transpose([ell(1) ell(2)])), transpose([1000 1000]), [], [], options)
-%   %{options = optimset('OutputFcn', @callback);
-%   %[ell_hat fval exitflag output] = fminsearch(@(ell)trilateration_objective(controls, target, transpose([ell(1)  ell(2)])), transpose([-12000 -12000]), options)
-%   
-%   
+  if exist('OCTAVE_VERSION', 'builtin')
+    pkg('load', 'optim');
+    options = optimset('Jacobian', 'off', 'TolFun', 1e-12);
+  else
+    options = optimoptions('lsqnonlin', 'SpecifyObjectiveGradient', false, ...
+      'Algorithm', 'levenberg-marquardt', 'FunctionTolerance', 1e-12);
+  end
+  if show_plot
+    options.OutputFcn = @callback;
+  end
+  [estimate, resNorm] = lsqnonlin(residual, [1000; 1000], [], [], options);
 end
-% 
-% 
-function stop = callback(current_ell, optimValues, state)
+
+function observations = observation_model(controls, location)
+  observations = atan2(controls(2,:) - location(2), controls(1,:) - location(1)).';
+end
+
+function stop = callback(current_location, optimValues, state)
   stop = false;
-  hold on;
-  persistent prev;
+  persistent previous;
   if strcmp(state, 'init')
-    prev = current_ell;
+    previous = current_location;
   end
-  line(prev, current_ell);
-  prev = current_ell;
+  line([previous(1), current_location(1)], [previous(2), current_location(2)]);
+  previous = current_location;
   drawnow;
 end
- 
-function ret = azimuth_model(control_points, location)
-x = size(control_points);
-ret = zeros(x(2), 1);
-for i = 1 : x(2)
-    ret(i) = atan2(control_points(2, i) - location(2), control_points(1, i) - location(1));
-end
-end
- 
-function ret = azimuth_model2(control_points, location)
-x = size(control_points);
-ret = zeros(2*x(2), 1);
-for i = 1 : x(2)
-    ret(i) = (control_points(1, i) - location(1)) / norm(control_points(:, i) - location);
-    ret(i + x(2)) = (control_points(2, i) - location(2)) / norm(control_points(:, i) - location);
-
-end
-end
- 
-function [r, jacobian_ret] = azimuth_residual(controls,target_observations,location)
-  if nargout > 1
-    syms controls location target_observations
-    jacobian_ret =  jacobian(trilateration_model(controls , location) - target_observations);
-  end
-  r = azimuth_model(controls , location) - target_observations;
- 
-end
-

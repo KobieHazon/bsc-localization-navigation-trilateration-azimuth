@@ -11,22 +11,19 @@ This project contains two MATLAB implementations for estimating a target locatio
 
 Both scripts use MATLAB optimization tooling around `lsqnonlin`, contour plots, and callback-based visualization of optimization progress.
 
-## Recovered Materials
+## Materials
 
-- `assignment/MISSING_HANDOUT.md` records that the original exercise handout was not recovered.
-- `src/` contains the recovered submitted MATLAB source files.
-- `report/HW3.pdf` is the recovered submitted PDF report.
+- `src/` contains the MATLAB source files.
+- `report/HW3.pdf` is the submitted PDF report.
 
-## Requirements
+## Run
 
-The source was written for MATLAB with Optimization Toolbox support. A purpose-built GNU Octave 11.1.0 environment with `optim` 1.6.3 parsed both submitted files, and an external compatibility harness using the submitted range and azimuth formulas recovered the expected point `(9500, 500)` with negligible residuals. Exact MATLAB `optimoptions`, callback, plotting, and entrypoint behavior was not reproduced.
+In MATLAB with Optimization Toolbox, add `src/` to the path and run `HW3_part1` or `HW3_part2`. Both return the estimated location and residual norm, and plot the objective and solver trajectory. Pass `false` to disable plotting.
 
-## Validate
-
-Run:
+GNU Octave with the `optim` package can run the same entry points. With Docker installed:
 
 ```sh
-make check
+make test
 ```
 
-The check confirms the expected MATLAB files, important solver markers, and basic privacy hygiene. The recorded container validation separately covers formula-level execution.
+The test executes both solvers and checks convergence to `(9500, 500)` with small residuals. The MATLAB-specific toolbox implementation is a separate runtime; the automated suite uses Octave. `make check` checks the repository's source and document structure.

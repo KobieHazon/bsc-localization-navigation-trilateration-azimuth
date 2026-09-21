@@ -1,61 +1,51 @@
-function HW3()
-  controls = transpose([10000 10000; -10000 -10000; 10000 -10000; -10000 10000]);
-  target = trilateration_model(controls, transpose([9500 500]));
-  x = -20000:100:20000;
-  y = -20000:100:20000;
-  phi_grid = zeros(401, 401);
-  for i = 1:401
-    for j = 1:401
-      phi_grid(i, j) = norm(trilateration_residual(controls, target , transpose([x(i) y(j)])))^2;
-    end
+function [estimate, resNorm] = HW3_part1(show_plot)
+  % Estimate the target from four range/azimuth observations.
+  if nargin < 1
+    show_plot = true;
   end
-   
-  figure
-  contour(x, y, phi_grid, 25);
-  daspect([1 1 1]);
-  hold on;
-  plot(controls(1, : ), controls(2, :), 'ro ');
-  plot(target(1, :), target(2, :), 'rx ');
-  hold off;
-  options = optimoptions('lsqnonlin', 'SpecifyObjectiveGradient', false, 'Algorithm', 'levenberg-marquardt', 'OutputFcn', @callback);
-  [x, resNorm, residual, exitflag, output] = lsqnonlin(@(ell) trilateration_residual(transpose([10000 10000; -10000 -10000; 10000 -10000; -10000 10000]), target, transpose([ell(1) ell(2)])), transpose([-12000 -12000]), [], [], options)
-  %{options = optimset('OutputFcn', @callback);
-  %[ell_hat fval exitflag output] = fminsearch(@(ell)trilateration_objective(controls, target, transpose([ell(1)  ell(2)])), transpose([-12000 -12000]), options)
+  controls = [10000 10000; -10000 -10000; 10000 -10000; -10000 10000].';
+  target_location = [9500; 500];
+  observations = observation_model(controls, target_location);
+  residual = @(location) observation_model(controls, location) - observations;
+  if show_plot
+    coordinates = -20000:100:20000;
+    objective = zeros(length(coordinates));
+    for row = 1:length(coordinates)
+      for column = 1:length(coordinates)
+        objective(row, column) = norm(residual([coordinates(column); coordinates(row)]))^2;
+      end
+    end
+    figure;
+    contour(coordinates, coordinates, objective, 25);
+    daspect([1 1 1]);
+    hold on;
+    plot(controls(1,:), controls(2,:), 'ro');
+    plot(target_location(1), target_location(2), 'rx');
+  end
+  if exist('OCTAVE_VERSION', 'builtin')
+    pkg('load', 'optim');
+    options = optimset('Jacobian', 'off', 'TolFun', 1e-12);
+  else
+    options = optimoptions('lsqnonlin', 'SpecifyObjectiveGradient', false, ...
+      'Algorithm', 'levenberg-marquardt', 'FunctionTolerance', 1e-12);
+  end
+  if show_plot
+    options.OutputFcn = @callback;
+  end
+  [estimate, resNorm] = lsqnonlin(residual, [-12000; -12000], [], [], options);
+end
 
-    end
- 
- 
-function dist_vector = trilateration_model(controls , location)
-controls
-x = size(controls);
-  dist_vector = zeros(x(2), 1);
-  for  i = 1:x(2)
-    i
-    dist_vector(i) = sqrt((controls(1,i) - location(1))^2 + (controls(2,i) - location(2))^2);
-  end
+function observations = observation_model(controls, location)
+  observations = sqrt(sum((controls - location).^2, 1)).';
 end
- 
-function [r, jacobian_ret] = trilateration_residual(controls,target_observations,location)
-  if nargout > 1
-    syms controls location target_observations
-    jacobian_ret =  jacobian(trilateration_model(controls , location) - target_observations);
-  end
-  r = trilateration_model(controls , location) - target_observations;
- 
-end
- 
-function ret = trilateration_objective(control_points, target_observations, location)
-  ret = norm(trilateration_residual(control_points, target_observations, location))^2;
-end
- 
-function stop = callback(current_ell, optimValues, state)
+
+function stop = callback(current_location, optimValues, state)
   stop = false;
-  hold on;
-  persistent prev;
+  persistent previous;
   if strcmp(state, 'init')
-    prev = current_ell;
+    previous = current_location;
   end
-  line(prev, current_ell);
-  prev = current_ell;
+  line([previous(1), current_location(1)], [previous(2), current_location(2)]);
+  previous = current_location;
   drawnow;
 end
