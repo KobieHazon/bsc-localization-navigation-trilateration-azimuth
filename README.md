@@ -26,4 +26,4 @@ GNU Octave with the `optim` package can run the same entry points. With Docker i
 make test
 ```
 
-The test executes both solvers and checks convergence to `(9500, 500)` with small residuals. The MATLAB-specific toolbox implementation is a separate runtime; the automated suite uses Octave. `make check` checks the repository's source and document structure.
+The test executes both solvers and checks convergence to `(9500, 500)` with small residuals. The MATLAB-specific toolbox implementation is a separate runtime; the automated suite uses Octave.
